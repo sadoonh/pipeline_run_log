@@ -1,0 +1,130 @@
+# Drop this file into any repo to automatically log all GitHub Actions runs
+# into a PostgreSQL database.
+#
+# Required secrets:
+#   DATABASE_URL          — postgresql://user:pass@host:5432/dbname
+#   RECORDER_GITHUB_TOKEN — fine-grained PAT with Actions: read
+
+name: Record pipeline run
+
+on:
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+
+jobs:
+  record:
+    if: github.event.workflow_run.name != 'Record pipeline run'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    concurrency:
+      group: record-pipeline-run-${{ github.event.workflow_run.id }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet psycopg2-binary requests
+
+      - name: Insert pipeline run into DB
+        env:
+          DATABASE_URL:     ${{ secrets.DATABASE_URL }}
+          GH_TOKEN:         ${{ secrets.RECORDER_GITHUB_TOKEN }}
+
+          RUN_ID:           ${{ github.event.workflow_run.id }}
+          WORKFLOW_NAME:    ${{ github.event.workflow_run.name }}
+          CONCLUSION:       ${{ github.event.workflow_run.conclusion }}
+          BRANCH:           ${{ github.event.workflow_run.head_branch }}
+          ACTOR:            ${{ github.event.workflow_run.actor.login }}
+          HEAD_SHA:         ${{ github.event.workflow_run.head_sha }}
+          RUN_STARTED_AT:   ${{ github.event.workflow_run.run_started_at }}
+          RUN_COMPLETED_AT: ${{ github.event.workflow_run.updated_at }}
+          RUN_URL:          ${{ github.event.workflow_run.html_url }}
+          REPOSITORY:       ${{ github.event.workflow_run.repository.full_name }}
+
+        run: |
+          python3 - <<'PYEOF'
+          import os, sys, requests, psycopg2
+          from datetime import datetime
+
+          def parse_dt(s):
+              return datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
+
+          def fetch_failed_step(repo, run_id, token):
+              url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs"
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              }
+
+              for attempt in range(3):
+                  try:
+                      resp = requests.get(url, headers=headers, timeout=10)
+                      resp.raise_for_status()
+
+                      for job in resp.json().get("jobs", []):
+                          for step in job.get("steps", []):
+                              if step.get("conclusion") == "failure":
+                                  return step["name"][:255]
+                      return None
+
+                  except Exception as exc:
+                      if attempt == 2:
+                          print(f"Warning: failed to fetch failed step: {exc}", file=sys.stderr)
+                          return None
+
+          conclusion  = os.environ.get("CONCLUSION") or None
+          failed_step = None
+
+          if conclusion == "failure":
+              failed_step = fetch_failed_step(
+                  os.environ["REPOSITORY"],
+                  os.environ["RUN_ID"],
+                  os.environ["GH_TOKEN"],
+              )
+
+          conn = psycopg2.connect(os.environ["DATABASE_URL"], connect_timeout=10)
+
+          try:
+              with conn.cursor() as cur:
+                  cur.execute("""
+                      INSERT INTO pipeline_runs (
+                          run_id, workflow_name, conclusion,
+                          run_started_at, run_completed_at,
+                          repository, branch, actor, head_sha,
+                          run_url, failed_step, source
+                      ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'live')
+                      ON CONFLICT (run_id) DO UPDATE SET
+                          conclusion       = EXCLUDED.conclusion,
+                          run_completed_at = EXCLUDED.run_completed_at,
+                          failed_step      = EXCLUDED.failed_step
+                      WHERE pipeline_runs.conclusion IS DISTINCT FROM EXCLUDED.conclusion
+                         OR pipeline_runs.run_completed_at IS DISTINCT FROM EXCLUDED.run_completed_at
+                         OR pipeline_runs.failed_step IS DISTINCT FROM EXCLUDED.failed_step
+                  """, (
+                      int(os.environ["RUN_ID"]),
+                      os.environ["WORKFLOW_NAME"][:255],
+                      conclusion,
+                      parse_dt(os.environ.get("RUN_STARTED_AT")),
+                      parse_dt(os.environ.get("RUN_COMPLETED_AT")),
+                      os.environ["REPOSITORY"][:255],
+                      (os.environ.get("BRANCH") or "")[:255] or None,
+                      (os.environ.get("ACTOR")  or "")[:100] or None,
+                      (os.environ.get("HEAD_SHA") or "")[:40] or None,
+                      (os.environ.get("RUN_URL") or "")[:500] or None,
+                      failed_step,
+                  ))
+
+              conn.commit()
+              print(f"Recorded run {os.environ['RUN_ID']} — {conclusion} (failed_step={failed_step})")
+
+          finally:
+              conn.close()
+          PYEOF
