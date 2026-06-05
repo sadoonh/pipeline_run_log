@@ -1,0 +1,246 @@
+# /// script
+# dependencies = [
+#     "altair==6.1.0",
+#     "drawdata==0.5.1",
+#     "marimo",
+#     "matplotlib==3.10.9",
+#     "modraw==0.1.14",
+#     "mopaint==0.4.1",
+#     "polars==1.41.2",
+#     "pytest==9.0.3",
+# ]
+# requires-python = ">=3.13"
+# ///
+
+import marimo
+
+__generated_with = "0.23.8"
+app = marimo.App(width="columns", layout_file="layouts/notebook.slides.json")
+
+
+@app.cell(column=0, hide_code=True)
+def _():
+    import marimo as mo
+
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Formatting
+    """)
+    return
+
+
+@app.cell
+def _():
+    def calculate_total(items,tax_rate=.08):
+        total=0
+        for item in items:
+                total+=item["price"]*item["quantity"]
+        return   total+(total*tax_rate)
+
+
+    def print_receipt(customer_name,items):
+     print("Customer:",customer_name)
+     print("Total:",calculate_total(items))
+
+
+    cart=[{"name":"Keyboard","price":99.99,"quantity":1},{"name":"Mouse","price":49.99,"quantity":2}]
+    print_receipt("Aisha",cart)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ---
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Linting
+    """)
+    return
+
+
+@app.cell
+def _(user_name):
+    import os, sys
+    import json
+
+    def load_user_data(path):
+        try:
+            file = open(path)
+            data = json.load(file)
+            return data
+        except:
+            return None
+
+    def greet_user(user):
+        message = "Hello, " + user_name
+        print(message)
+
+    load_user_data("users.json")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    <br>
+    <br>
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ---
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Testing
+    """)
+    return
+
+
+@app.function
+def add_tax(price, tax_rate):
+    return price + (price * tax_rate)
+
+
+@app.cell(column=1, hide_code=True)
+def _(mo):
+    mo.md(r"""
+ 
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Formatting
+    """)
+    return
+
+
+@app.cell
+def _():
+    def calculate_total(items, tax_rate=0.08):
+        total = 0
+        for item in items:
+            total += item["price"] * item["quantity"]
+        return total + (total * tax_rate)
+
+
+    def print_receipt(customer_name, items):
+        print("Customer:", customer_name)
+        print("Total:", calculate_total(items))
+
+
+    cart = [
+        {"name": "Keyboard", "price": 99.99, "quantity": 1},
+        {"name": "Mouse", "price": 49.99, "quantity": 2},
+    ]
+    print_receipt("Aisha", cart)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ___
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Linting
+    """)
+    return
+
+
+@app.cell
+def _(user_name):
+    import json
+
+    def load_user_data(path):
+        try:
+            file = open(path)
+            data = json.load(file)
+            return data
+        except:
+            return None
+
+    def greet_user(user):
+        message = "Hello, " + user_name
+        print(message)
+
+    load_user_data("users.json")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - E722 Do not use bare `except`
+    - F821 Undefined name `user_name`
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ---
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Testing
+    """)
+    return
+
+
+@app.cell
+def _():
+    import pytest
+
+    def test_add_tax():
+        assert add_tax(100, 0.08) == 108
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ============================= test session starts =============================
+    collected 1 item
+
+    test_file.py .                                                          [100%]
+
+    ============================== 1 passed in 0.01s ==============================
+    CompletedProcess(args=['pytest', 'test_file.py'], returncode=0)
+    """)
+    return
+
+
+if __name__ == "__main__":
+    app.run()
