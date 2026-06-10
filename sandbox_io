@@ -1,0 +1,263 @@
+from __future__ import annotations
+
+import logging
+import os
+import re
+from typing import Any, Literal
+
+import awswrangler as wr
+import boto3
+import pandas as pd
+
+# -------------------------------------------------------------------------
+# Configuration & Setup
+# -------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+
+# Use environment variables for flexibility across Dev/Prod, with fallbacks.
+SANDBOX_BUCKET = os.environ.get("SANDBOX_BUCKET")
+SANDBOX_DATABASE = os.environ.get("SANDBOX_DATABASE")
+SANDBOX_ATHENA_OUTPUT = f"s3://{SANDBOX_BUCKET}/athena-results/"
+
+IfExists = Literal["replace", "append"]
+
+
+# -------------------------------------------------------------------------
+# Internal Helpers
+# -------------------------------------------------------------------------
+
+def _validate_table_name(table_name: str) -> str:
+    """Validates and formats the table name to be Athena/Glue friendly.
+
+    Allows only lowercase letters, numbers, and underscores. The table name
+    must begin with a letter.
+
+    Args:
+        table_name (str): The logical table name to validate.
+
+    Returns:
+        str: The sanitized, lowercase table name.
+
+    Raises:
+        ValueError: If the table name contains invalid characters or does
+            not start with a letter.
+    """
+    table_name = table_name.strip().lower()
+
+    if not re.fullmatch(r"[a-z][a-z0-9_]*", table_name):
+        raise ValueError(
+            "table_name must start with a letter and contain only "
+            "lowercase letters, numbers, and underscores."
+        )
+
+    return table_name
+
+
+def _table_path(table_name: str) -> str:
+    """Constructs the S3 path for a given table.
+
+    Args:
+        table_name (str): The logical table name.
+
+    Returns:
+        str: The full S3 URI for the table's data.
+    """
+    return f"s3://{SANDBOX_BUCKET}/tables/{table_name}/"
+
+
+# -------------------------------------------------------------------------
+# Public API: Sandbox Management
+# -------------------------------------------------------------------------
+
+def list_sandbox_tables(boto3_session: boto3.Session | None = None) -> list[str]:
+    """Lists all available tables in the sandbox database.
+
+    Args:
+        boto3_session (boto3.Session | None, optional): A custom boto3 session.
+            Defaults to None (uses default session).
+
+    Returns:
+        list[str]: A list of table names currently in the sandbox Glue catalog.
+    """
+    tables = wr.catalog.get_tables(
+        database=SANDBOX_DATABASE,
+        boto3_session=boto3_session,
+    )
+    return [t["Name"] for t in tables]
+
+
+def delete_table_from_sandbox(
+    table_name: str, 
+    boto3_session: boto3.Session | None = None
+) -> None:
+    """Drops a table from the sandbox and deletes its underlying S3 data.
+
+    Args:
+        table_name (str): The logical table name to delete.
+        boto3_session (boto3.Session | None, optional): A custom boto3 session.
+            Defaults to None (uses default session).
+    """
+    table_name = _validate_table_name(table_name)
+    path = _table_path(table_name)
+
+    logger.info(f"Deleting S3 data for table '{table_name}' at {path}...")
+    wr.s3.delete_objects(path, boto3_session=boto3_session)
+
+    logger.info(f"Dropping '{table_name}' from Glue catalog...")
+    wr.catalog.delete_table_if_exists(
+        database=SANDBOX_DATABASE,
+        table=table_name,
+        boto3_session=boto3_session,
+    )
+    logger.info(f"Successfully deleted sandbox table '{table_name}'.")
+
+
+# -------------------------------------------------------------------------
+# Public API: Data Writing
+# -------------------------------------------------------------------------
+
+def write_df_to_sandbox(
+    df: pd.DataFrame,
+    table_name: str,
+    if_exists: IfExists = "replace",
+    partition_cols: list[str] | None = None,
+    description: str | None = None,
+    boto3_session: boto3.Session | None = None,
+) -> str:
+    """Writes a pandas DataFrame to the sandbox S3 bucket as Parquet and
+    registers it as a Glue Catalog table.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to write.
+        table_name (str): Logical table name users will query from Athena.
+        if_exists (IfExists, optional): What to do if the table already exists.
+            "replace" overwrites existing data; "append" adds rows.
+            Defaults to "replace".
+        partition_cols (list[str] | None, optional): List of column names to 
+            partition the dataset by in S3. Improves query performance for 
+            large datasets. Defaults to None.
+        description (str | None, optional): A description to attach to the 
+            table in the Glue Data Catalog. Defaults to None.
+        boto3_session (boto3.Session | None, optional): A custom boto3 session.
+            Defaults to None.
+
+    Returns:
+        str: The S3 path where the table was written.
+
+    Raises:
+        ValueError: If the DataFrame is empty or the table name is invalid.
+    """
+    table_name = _validate_table_name(table_name)
+    path = _table_path(table_name)
+
+    if df.empty:
+        raise ValueError("Cannot write an empty DataFrame to sandbox.")
+
+    mode_map = {
+        "replace": "overwrite",
+        "append": "append",
+    }
+    mode = mode_map[if_exists]
+
+    logger.info(f"Writing {len(df)} rows to sandbox table '{table_name}' (Mode: {mode})...")
+
+    wr.s3.to_parquet(
+        df=df,
+        path=path,
+        dataset=True,
+        database=SANDBOX_DATABASE,
+        table=table_name,
+        mode=mode,
+        compression="snappy",
+        schema_evolution=True,
+        partition_cols=partition_cols,
+        description=description,
+        parameters={"creator": os.environ.get("USER", "unknown")},
+        boto3_session=boto3_session,
+    )
+
+    logger.info(f"Successfully wrote data to {path}")
+    return path
+
+
+# -------------------------------------------------------------------------
+# Public API: Data Reading
+# -------------------------------------------------------------------------
+
+def read_df_from_sandbox(
+    sql: str,
+    params: dict[str, Any] | list[Any] | None = None,
+    boto3_session: boto3.Session | None = None,
+) -> pd.DataFrame:
+    """Queries the sandbox Glue/Athena database and returns a pandas DataFrame.
+
+    Examples:
+        Query a full table:
+            >>> df = read_df_from_sandbox("SELECT * FROM my_table")
+        
+        Safely query with parameters to prevent SQL injection:
+            >>> df = read_df_from_sandbox(
+            ...     "SELECT * FROM my_table WHERE status = :status",
+            ...     params={"status": "active"}
+            ... )
+
+    Args:
+        sql (str): SQL query to execute in Athena.
+        params (dict[str, Any] | list[Any] | None, optional): Parameters to bind 
+            to the SQL query. Defaults to None.
+        boto3_session (boto3.Session | None, optional): A custom boto3 session.
+            Defaults to None.
+
+    Returns:
+        pd.DataFrame: The query results.
+    """
+    logger.info("Executing Athena query on sandbox database...")
+    return wr.athena.read_sql_query(
+        sql=sql,
+        database=SANDBOX_DATABASE,
+        s3_output=SANDBOX_ATHENA_OUTPUT,
+        ctas_approach=False,
+        params=params,
+        boto3_session=boto3_session,
+    )
+
+
+def read_table_from_sandbox(
+    table_name: str, 
+    limit: int | None = None,
+    boto3_session: boto3.Session | None = None,
+) -> pd.DataFrame:
+    """Convenience helper to read an entire table without writing SQL.
+
+    Examples:
+        Read a full table:
+            >>> df = read_table_from_sandbox("my_table")
+
+        Read only 10 rows:
+            >>> df = read_table_from_sandbox("my_table", limit=10)
+
+    Args:
+        table_name (str): The logical table name to read.
+        limit (int | None, optional): The maximum number of rows to return.
+            Defaults to None (returns all rows).
+        boto3_session (boto3.Session | None, optional): A custom boto3 session.
+            Defaults to None.
+
+    Returns:
+        pd.DataFrame: The table data.
+
+    Raises:
+        ValueError: If the limit is less than or equal to 0, or if the table
+            name is invalid.
+    """
+    table_name = _validate_table_name(table_name)
+
+    sql = f'SELECT * FROM "{table_name}"'
+
+    if limit is not None:
+        if limit <= 0:
+            raise ValueError("limit must be greater than 0.")
+        sql += f" LIMIT {limit}"
+
+    return read_df_from_sandbox(sql=sql, boto3_session=boto3_session)
