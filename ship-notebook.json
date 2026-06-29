@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Ship my notebook",
+      "description": "One-click: safety-check the branch, sync with main, commit with a Conventional Commit message, push, and open a PR against main. For analysts who don't want to run git by hand.",
+      "trigger": "Manual",
+      "enabled": true,
+      "timeout": 300,
+      "action": {
+        "type": "prompt",
+        "prompt": "The analyst is done with their work and wants to ship it. Follow the 'ship it' sequence in the git-workflow steering doc exactly:\n1. Run `git rev-parse --abbrev-ref HEAD`. If we are on main, STOP and create an analyst/<name>/<desc> branch (ask for the name if needed).\n2. Run `git status` and `git diff --stat` and summarize what will be committed in one or two lines. Flag anything surprising: large data files, secrets, or files outside the analyst's working area.\n3. `git fetch origin` then `git rebase origin/main`. If there are conflicts, STOP and clearly explain which files conflict and offer to walk through resolving them. Do not guess at conflict resolution.\n4. Stage the relevant files and generate a Conventional Commit message from the diff (exp: for exploratory notebook work, feat: for a reusable new notebook/util, fix: for a fix). Show me the message before committing.\n5. `git push -u origin <branch>`.\n6. Open a PR against main with `gh pr create --base main --fill`.\nNever force-push or discard uncommitted work without explicit confirmation. Explain each step in one short line as you go."
+      }
+    }
+  ]
+}
