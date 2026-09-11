@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="A visual guide to why Power BI Project (PBIP) files are better suited for Git, GitHub, pull requests, code review, and collaborative development."
+  />
+  <title>Why PBIP Changes Power BI Development</title>
+  <style>
+    :root {
+      --bg: #071018;
+      --panel: #0d1822;
+      --panel-2: #101f2b;
+      --panel-3: #132837;
+      --text: #eef5f7;
+      --muted: #a8b8c1;
+      --faint: #6f8590;
+      --yellow: #f2c811;
+      --yellow-soft: rgba(242, 200, 17, 0.14);
+      --green: #66d9a6;
+      --green-soft: rgba(102, 217, 166, 0.13);
+      --red: #ff7a86;
+      --red-soft: rgba(255, 122, 134, 0.12);
+      --blue: #66b3ff;
+      --blue-soft: rgba(102, 179, 255, 0.12);
+      --border: rgba(255, 255, 255, 0.09);
+      --shadow: 0 18px 50px rgba(0,0,0,.28);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 85% 8%, rgba(242,200,17,.10), transparent 28%),
+        radial-gradient(circle at 10% 35%, rgba(102,179,255,.08), transparent 24%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(7,16,24,.78);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 750;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--yellow);
+      color: #171717;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      box-shadow: 0 8px 26px rgba(242,200,17,.20);
+    }
+
+    nav {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    nav a {
+      text-decoration: none;
+      transition: color .2s ease;
+    }
+
+    nav a:hover { color: var(--text); }
+
+    main {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 24px 70px;
+    }
+
+    .hero {
+      min-height: 620px;
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      align-items: center;
+      gap: 52px;
+      padding: 64px 0 52px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(242,200,17,.24);
+      background: var(--yellow-soft);
+      color: #f6dc57;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 18px 0 18px;
+      font-size: clamp(44px, 7vw, 82px);
+      line-height: .98;
+      letter-spacing: -.055em;
+      max-width: 760px;
+    }
+
+    .hero h1 span { color: var(--yellow); }
+
+    .hero-copy {
+      font-size: 20px;
+      color: var(--muted);
+      max-width: 700px;
+    }
+
+    .hero-actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 750;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--yellow);
+      color: #151515;
+      border-color: var(--yellow);
+    }
+
+    .btn-secondary { background: rgba(255,255,255,.035); }
+
+    .hero-stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 34px;
+      max-width: 680px;
+    }
+
+    .mini-stat {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .mini-stat span {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--faint);
+    }
+
+    .hero-visual {
+      position: relative;
+    }
+
+    .repo-window {
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(17,33,45,.98), rgba(10,22,31,.98));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transform: rotate(1deg);
+    }
+
+    .window-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dots { display: flex; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.23); }
+
+    .repo-body { padding: 12px 8px 16px; }
+
+    .file {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #c8d6dc;
+    }
+
+    .file:hover { background: rgba(255,255,255,.035); }
+    .folder { color: #8bc4ff; }
+    .status-add { color: var(--green); }
+    .status-mod { color: #ffd65b; }
+
+    .diff-card {
+      position: absolute;
+      right: -26px;
+      bottom: -48px;
+      width: 86%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #09141d;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transform: rotate(-2deg);
+    }
+
+    .diff-head {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .diff-line {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      padding: 7px 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .diff-line.add { background: var(--green-soft); color: #b7f3d7; }
+    .diff-line.remove { background: var(--red-soft); color: #ffc1c7; }
+    .diff-line.neutral { color: #8da1ab; }
+
+    section { padding: 78px 0 0; }
+
+    .section-kicker {
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .11em;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
+      letter-spacing: -.04em;
+      max-width: 800px;
+    }
+
+    .section-intro {
+      color: var(--muted);
+      font-size: 17px;
+      max-width: 760px;
+      margin: 16px 0 28px;
+    }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: rgba(13,24,34,.78);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.14);
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      margin-bottom: 22px;
+      background: var(--yellow-soft);
+      border: 1px solid rgba(242,200,17,.18);
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+      letter-spacing: -.02em;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .comparison {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(13,24,34,.72);
+    }
+
+    .comparison-toggle {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toggle-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .toggle-btn.active {
+      color: #161616;
+      background: var(--yellow);
+      border-color: var(--yellow);
+    }
+
+    .compare-body {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      min-height: 330px;
+    }
+
+    .compare-explain {
+      padding: 26px;
+      border-right: 1px solid var(--border);
+    }
+
+    .compare-explain h3 { margin-top: 0; font-size: 25px; letter-spacing: -.03em; }
+    .compare-explain p { color: var(--muted); }
+
+    .compare-list {
+      padding: 0;
+      margin: 20px 0 0;
+      list-style: none;
+    }
+
+    .compare-list li {
+      margin: 11px 0;
+      padding-left: 24px;
+      position: relative;
+      color: #c9d6dc;
+      font-size: 14px;
+    }
+
+    .compare-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .compare-list.bad li::before {
+      content: "–";
+      color: var(--red);
+    }
+
+    .compare-code {
+      padding: 24px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: rgba(4,11,16,.45);
+      overflow-x: auto;
+    }
+
+    .code-label { color: var(--faint); margin-bottom: 12px; }
+    .tree-line { min-height: 22px; color: #d8e3e8; }
+    .tree-line .folder { color: #88c4ff; }
+    .tree-line .filetxt { color: #d8e3e8; }
+    .tree-line .accent { color: #f5d34d; }
+    .tree-line .muted { color: #748994; }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .step {
+      border: 1px solid var(--border);
+      background: rgba(13,24,34,.78);
+      border-radius: 16px;
+      padding: 18px;
+      position: relative;
+      min-height: 150px;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--yellow);
+      color: #151515;
+      font-weight: 900;
+      font-size: 12px;
+      margin-bottom: 24px;
+    }
+
+    .step h4 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--faint);
+      z-index: 2;
+    }
+
+    .anatomy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .anatomy-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: rgba(13,24,34,.78);
+    }
+
+    .anatomy-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .anatomy-head strong { font-size: 17px; }
+    .tag {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      background: var(--blue-soft);
+      color: #a9d5ff;
+    }
+
+    .anatomy-body { padding: 20px; }
+    .anatomy-body p { color: var(--muted); margin: 0 0 15px; font-size: 14px; }
+
+    .filechips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #d7e4e9;
+      font-size: 11px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .impact {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .impact-panel {
+      padding: 28px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      min-height: 300px;
+    }
+
+    .impact-panel.before { background: linear-gradient(155deg, rgba(255,122,134,.09), rgba(13,24,34,.76)); }
+    .impact-panel.after { background: linear-gradient(155deg, rgba(102,217,166,.09), rgba(13,24,34,.76)); }
+
+    .impact-label {
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .before .impact-label { color: #ff9aa4; }
+    .after .impact-label { color: #8de5bd; }
+
+    .impact-panel h3 { font-size: 26px; margin: 0 0 16px; letter-spacing: -.03em; }
+
+    .impact-item {
+      display: flex;
+      gap: 12px;
+      margin: 14px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .impact-item b { color: var(--text); }
+
+    .callout {
+      margin-top: 28px;
+      border: 1px solid rgba(242,200,17,.2);
+      background: linear-gradient(135deg, rgba(242,200,17,.10), rgba(13,24,34,.76));
+      border-radius: var(--radius);
+      padding: 26px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .callout h3 { margin: 0 0 7px; font-size: 24px; }
+    .callout p { color: var(--muted); margin: 0; max-width: 760px; }
+
+    .pill {
+      white-space: nowrap;
+      padding: 10px 13px;
+      border-radius: 999px;
+      background: var(--yellow);
+      color: #171717;
+      font-weight: 850;
+      font-size: 12px;
+    }
+
+    .caveats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .caveat {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      background: rgba(13,24,34,.68);
+    }
+
+    .caveat strong { display: block; margin-bottom: 6px; }
+    .caveat span { color: var(--muted); font-size: 13px; }
+
+    .sources {
+      border-top: 1px solid var(--border);
+      margin-top: 82px;
+      padding-top: 30px;
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    .sources h3 { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    .sources ul { margin: 0; padding-left: 18px; }
+    .sources li { margin: 7px 0; }
+    .sources a { color: #a9c5d2; }
+
+    footer {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 24px 38px;
+      color: var(--faint);
+      font-size: 11px;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        padding-top: 54px;
+      }
+      .hero-visual { max-width: 700px; }
+      .benefit-grid,
+      .caveats { grid-template-columns: 1fr 1fr; }
+      .workflow { grid-template-columns: 1fr 1fr; }
+      .step:not(:last-child)::after { display: none; }
+      .anatomy-grid,
+      .impact { grid-template-columns: 1fr; }
+      .compare-body { grid-template-columns: 1fr; }
+      .compare-explain { border-right: 0; border-bottom: 1px solid var(--border); }
+    }
+
+    @media (max-width: 620px) {
+      .topbar-inner { align-items: flex-start; }
+      nav { display: none; }
+      main { padding-left: 16px; padding-right: 16px; }
+      .hero { gap: 34px; padding-top: 42px; }
+      .hero h1 { font-size: 48px; }
+      .hero-copy { font-size: 17px; }
+      .hero-stat-row,
+      .benefit-grid,
+      .caveats,
+      .workflow { grid-template-columns: 1fr; }
+      .diff-card { position: relative; right: auto; bottom: auto; width: 95%; margin: -16px auto 0; }
+      .repo-window { transform: none; }
+      .diff-card { transform: none; }
+      .callout { grid-template-columns: 1fr; }
+      .pill { width: fit-content; }
+    }
+
+    .gitdiff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .gitdiff-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(13,24,34,.78);
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,.14);
+    }
+
+    .gitdiff-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+    }
+
+    .gitdiff-titlebar strong {
+      font-size: 14px;
+      letter-spacing: -.01em;
+    }
+
+    .gitdiff-badge {
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .gitdiff-badge.bad {
+      color: #ffb5bd;
+      background: var(--red-soft);
+      border-color: rgba(255,122,134,.18);
+    }
+
+    .gitdiff-badge.good {
+      color: #a9efcf;
+      background: var(--green-soft);
+      border-color: rgba(102,217,166,.18);
+    }
+
+    .gitdiff-code {
+      margin: 0;
+      padding: 18px;
+      overflow-x: auto;
+      background: #08131b;
+      color: #d8e3e8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      min-height: 330px;
+      white-space: pre;
+    }
+
+    .gitdiff-code .hdr { color: #8fb6ce; }
+    .gitdiff-code .muted { color: #718792; }
+    .gitdiff-code .add { color: #b8f4d8; background: rgba(102,217,166,.08); display: inline-block; width: 100%; }
+    .gitdiff-code .remove { color: #ffc0c7; background: rgba(255,122,134,.08); display: inline-block; width: 100%; }
+
+    .gitdiff-foot {
+      padding: 14px 16px 16px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+
+    .gitdiff-foot strong { color: var(--text); }
+
+    @media (max-width: 920px) {
+      .gitdiff-grid { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">P</div>
+        <div>PBIP × GitHub</div>
+      </div>
+      <nav aria-label="Page sections">
+        <a href="#benefits">Benefits</a>
+        <a href="#compare">PBIX vs PBIP</a>
+        <a href="#git-diff-example">Git Diff</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#structure">Structure</a>
+        <a href="#sources">Sources</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Power BI Project format</div>
+        <h1>Power BI becomes a <span>real Git project.</span></h1>
+        <p class="hero-copy">
+          PBIP saves a Power BI solution as a structured project instead of treating the entire
+          report as one opaque binary file. That makes meaningful Git diffs, branches,
+          pull requests, reviews, merge workflows, and automation far more practical.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#compare">See the difference</a>
+          <a class="btn btn-secondary" href="#workflow">View GitHub workflow</a>
+        </div>
+
+        <div class="hero-stat-row">
+          <div class="mini-stat">
+            <strong>Text-based definitions</strong>
+            <span>Git can inspect what changed.</span>
+          </div>
+          <div class="mini-stat">
+            <strong>Smaller change surface</strong>
+            <span>Reports and models are split into files.</span>
+          </div>
+          <div class="mini-stat">
+            <strong>Reviewable development</strong>
+            <span>PRs become useful for Power BI work.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Mock GitHub repository containing a PBIP project">
+        <div class="repo-window">
+          <div class="window-bar">
+            <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            <span>sales-dashboard / feature-margin-metric</span>
+            <span>GitHub</span>
+          </div>
+          <div class="repo-body">
+            <div class="file"><span>▾</span><span class="folder">Sales.Report</span><span></span></div>
+            <div class="file"><span>├</span><span>definition.pbir</span><span class="status-mod">M</span></div>
+            <div class="file"><span>├</span><span class="folder">definition/pages</span><span></span></div>
+            <div class="file"><span>└</span><span>visual.json</span><span class="status-mod">M</span></div>
+            <div class="file"><span>▾</span><span class="folder">Sales.SemanticModel</span><span></span></div>
+            <div class="file"><span>├</span><span class="folder">definition/tables</span><span></span></div>
+            <div class="file"><span>├</span><span>Orders.tmdl</span><span class="status-mod">M</span></div>
+            <div class="file"><span>└</span><span>Measures.tmdl</span><span class="status-add">A</span></div>
+            <div class="file"><span>•</span><span>Sales.pbip</span><span></span></div>
+            <div class="file"><span>•</span><span>.gitignore</span><span></span></div>
+          </div>
+        </div>
+
+        <div class="diff-card">
+          <div class="diff-head">
+            <span>Measures.tmdl</span>
+            <span>+4 −1</span>
+          </div>
+          <div class="diff-line remove">- measure 'Gross Margin' = [Revenue] - [COGS]</div>
+          <div class="diff-line add">+ measure 'Gross Margin' = [Net Revenue] - [COGS]</div>
+          <div class="diff-line add">+ formatString: "$#,0"</div>
+          <div class="diff-line neutral">  displayFolder: "Executive KPIs"</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="benefits">
+      <div class="section-kicker">Why it matters</div>
+      <h2 class="section-title">The biggest benefits show up in version control.</h2>
+      <p class="section-intro">
+        The value of PBIP is not simply “a different file extension.” It changes how a Power BI
+        solution can participate in normal software-development practices.
+      </p>
+
+      <div class="benefit-grid">
+        <article class="card">
+          <div class="icon">Δ</div>
+          <h3>Meaningful diffs</h3>
+          <p>Review the exact report or semantic-model files that changed instead of seeing one large binary file replaced.</p>
+        </article>
+
+        <article class="card">
+          <div class="icon">⑂</div>
+          <h3>Branch-based development</h3>
+          <p>Create a feature branch for a new measure, page, or model change without immediately affecting the shared main branch.</p>
+        </article>
+
+        <article class="card">
+          <div class="icon">PR</div>
+          <h3>Pull-request reviews</h3>
+          <p>Use GitHub’s Files changed view, comments, approvals, required reviewers, and checks before changes are merged.</p>
+        </article>
+
+        <article class="card">
+          <div class="icon">↶</div>
+          <h3>Traceable history</h3>
+          <p>Commits create a chronological record of what changed, who changed it, and why it was introduced.</p>
+        </article>
+
+        <article class="card">
+          <div class="icon">⇄</div>
+          <h3>Better co-development</h3>
+          <p>PBIR and TMDL split content into smaller files, reducing the need for everyone to pass around a single report artifact.</p>
+        </article>
+
+        <article class="card">
+          <div class="icon">⚙</div>
+          <h3>Automation-ready</h3>
+          <p>Once definitions live in a repository, GitHub Actions can validate files, enforce repository rules, and support deployment workflows.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="section-kicker">PBIX vs PBIP</div>
+      <h2 class="section-title">Same Power BI work. Very different Git experience.</h2>
+      <p class="section-intro">
+        Switch the view below to see why a repository containing structured project files is easier
+        to understand than one containing only a packaged report artifact.
+      </p>
+
+      <div class="comparison">
+        <div class="comparison-toggle" role="tablist" aria-label="Compare PBIX and PBIP">
+          <button class="toggle-btn active" data-view="pbix" type="button">Traditional PBIX</button>
+          <button class="toggle-btn" data-view="pbip" type="button">PBIP Project</button>
+        </div>
+
+        <div class="compare-body">
+          <div class="compare-explain" id="compareExplain">
+            <h3>Git sees one packaged artifact.</h3>
+            <p>
+              A PBIX-centric repository can tell you that the file changed, but ordinary source-control review
+              cannot easily explain the internal report and model changes line by line.
+            </p>
+            <ul class="compare-list bad">
+              <li>Hard to inspect a meaningful text diff</li>
+              <li>Reviewers often need to open Power BI Desktop</li>
+              <li>Concurrent work tends to collide around one artifact</li>
+              <li>Automated checks have less granular source to inspect</li>
+            </ul>
+          </div>
+
+          <div class="compare-code" id="compareCode" aria-live="polite">
+            <div class="code-label">Repository</div>
+            <div class="tree-line">📁 sales-dashboard/</div>
+            <div class="tree-line">&nbsp;&nbsp;└── <span class="accent">SalesDashboard.pbix</span> <span class="muted">← modified</span></div>
+            <br />
+            <div class="tree-line muted">Git knows the file changed.</div>
+            <div class="tree-line muted">It does not naturally expose the internal report/model changes as source files.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="git-diff-example">
+      <div class="section-kicker">Concrete Git example</div>
+      <h2 class="section-title">What a Power BI change actually looks like in Git.</h2>
+      <p class="section-intro">
+        The difference becomes obvious when you compare the same kind of model change in a packaged
+        <code>.pbix</code> file versus a PBIP project using TMDL.
+      </p>
+
+      <div class="gitdiff-grid">
+        <article class="gitdiff-card">
+          <div class="gitdiff-titlebar">
+            <strong>PBIX: Git sees a binary file change</strong>
+            <span class="gitdiff-badge bad">Opaque diff</span>
+          </div>
+
+          <pre class="gitdiff-code"><span class="hdr">$ git diff --stat</span>
+ SalesDashboard.pbix | Bin 8243812 -> 8251044 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+
+<span class="hdr">$ git diff</span>
+diff --git a/SalesDashboard.pbix b/SalesDashboard.pbix
+index 4cc1a21..8f9d2ab 100644
+<span class="muted">Binary files a/SalesDashboard.pbix and
+b/SalesDashboard.pbix differ</span>
+
+<span class="muted"># Git can tell that the file changed,
+# but not which measure, relationship,
+# visual, or model property changed.</span></pre>
+
+          <div class="gitdiff-foot">
+            <strong>Reviewer experience:</strong> “The report file changed.” To understand the change,
+            the reviewer usually has to open the PBIX in Power BI Desktop and inspect it manually.
+          </div>
+        </article>
+
+        <article class="gitdiff-card">
+          <div class="gitdiff-titlebar">
+            <strong>PBIP: Git sees a readable TMDL change</strong>
+            <span class="gitdiff-badge good">Readable diff</span>
+          </div>
+
+          <pre class="gitdiff-code"><span class="hdr">$ git diff Sales.SemanticModel/definition/tables/Sales.tmdl</span>
+
+diff --git a/.../Sales.tmdl b/.../Sales.tmdl
+index a612d91..cb540c2 100644
+--- a/Sales.tmdl
++++ b/Sales.tmdl
+
+ table Sales
+ {
+<span class="remove">-    measure 'Gross Margin' = [Revenue] - [COGS]</span>
+<span class="add">+    measure 'Gross Margin' = [Net Revenue] - [COGS]</span>
+<span class="add">+    measure 'Gross Margin %' =</span>
+<span class="add">+        DIVIDE([Gross Margin], [Net Revenue])</span>
+
+<span class="add">+    formatString: "0.0%"</span>
+
+     column OrderDate
+     {
+         dataType: dateTime
+     }
+ }</pre>
+
+          <div class="gitdiff-foot">
+            <strong>Reviewer experience:</strong> “The existing margin formula changed, a new margin-percent
+            measure was added, and its format was set to percentage.” The change can be reviewed directly in GitHub.
+          </div>
+        </article>
+      </div>
+
+      <div class="callout">
+        <div>
+          <h3>This is the PBIP advantage in one screenshot.</h3>
+          <p>
+            With PBIX, Git mostly answers <strong>“did the file change?”</strong>.
+            With PBIP + TMDL, Git can answer <strong>“what exactly changed inside the model?”</strong>.
+          </p>
+        </div>
+        <div class="pill">Diffable analytics source</div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <div class="section-kicker">GitHub workflow</div>
+      <h2 class="section-title">Power BI work can follow the same review path as application code.</h2>
+      <p class="section-intro">
+        PBIP makes common GitHub practices practical: isolate work, inspect changes, review them,
+        validate them, and merge only when they are ready.
+      </p>
+
+      <div class="workflow">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h4>Create a branch</h4>
+          <p>Example: <code>feature/new-margin-kpi</code></p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h4>Edit in Power BI</h4>
+          <p>The report and semantic-model project files are updated.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h4>Commit changes</h4>
+          <p>Record the exact files that changed with a useful commit message.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h4>Open a pull request</h4>
+          <p>Review diffs, comment on changes, and run automated checks.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <h4>Merge to main</h4>
+          <p>Approved Power BI changes become part of the controlled shared version.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div>
+          <h3>The real shift: Power BI development becomes reviewable.</h3>
+          <p>
+            Instead of “here is the newest report file,” the team can say:
+            “here is the branch, here is the diff, here is the pull request, and here are the approvals.”
+          </p>
+        </div>
+        <div class="pill">Analytics engineering workflow</div>
+      </div>
+    </section>
+
+    <section id="structure">
+      <div class="section-kicker">What Git can see</div>
+      <h2 class="section-title">PBIP breaks the solution into source-control-friendly definitions.</h2>
+      <p class="section-intro">
+        Microsoft’s current project format uses PBIR for report definitions and TMDL for semantic-model
+        definitions. The separation is a major reason diffs and collaboration improve.
+      </p>
+
+      <div class="anatomy-grid">
+        <article class="anatomy-card">
+          <div class="anatomy-head">
+            <strong>Report</strong>
+            <span class="tag">PBIR</span>
+          </div>
+          <div class="anatomy-body">
+            <p>
+              Report content is represented through structured JSON files. In the enhanced report format,
+              report components such as pages and visuals are organized into individual files.
+            </p>
+            <div class="filechips">
+              <span class="chip">definition.pbir</span>
+              <span class="chip">pages/</span>
+              <span class="chip">visuals/</span>
+              <span class="chip">bookmarks/</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="anatomy-card">
+          <div class="anatomy-head">
+            <strong>Semantic model</strong>
+            <span class="tag">TMDL</span>
+          </div>
+          <div class="anatomy-body">
+            <p>
+              TMDL is designed to be human-friendly and stores model definitions in separate files,
+              including table, role, culture, and related model metadata.
+            </p>
+            <div class="filechips">
+              <span class="chip">tables/</span>
+              <span class="chip">roles/</span>
+              <span class="chip">cultures/</span>
+              <span class="chip">model.tmdl</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-kicker">Team impact</div>
+      <h2 class="section-title">From file handoffs to controlled collaboration.</h2>
+      <p class="section-intro">
+        PBIP does not magically eliminate coordination, but it gives the team much better primitives
+        for managing change.
+      </p>
+
+      <div class="impact">
+        <div class="impact-panel before">
+          <div class="impact-label">PBIX-centered workflow</div>
+          <h3>“Which file is the latest?”</h3>
+          <div class="impact-item"><span>01</span><div><b>Manual handoffs</b><br />Reports are often shared as entire artifacts.</div></div>
+          <div class="impact-item"><span>02</span><div><b>Limited reviewability</b><br />The reviewer may need to open the report to understand changes.</div></div>
+          <div class="impact-item"><span>03</span><div><b>Harder parallel work</b><br />Multiple people editing the same packaged file creates coordination friction.</div></div>
+        </div>
+
+        <div class="impact-panel after">
+          <div class="impact-label">PBIP + GitHub workflow</div>
+          <h3>“What exactly changed?”</h3>
+          <div class="impact-item"><span>01</span><div><b>Branches isolate work</b><br />Develop changes without immediately affecting main.</div></div>
+          <div class="impact-item"><span>02</span><div><b>Pull requests expose diffs</b><br />Reviewers can inspect changed project files before merge.</div></div>
+          <div class="impact-item"><span>03</span><div><b>History becomes an asset</b><br />Commits document the evolution of the report and model.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-kicker">Important nuance</div>
+      <h2 class="section-title">PBIP improves Git workflows—it does not remove every merge challenge.</h2>
+      <p class="section-intro">
+        Structured files make collaboration much better, but teams still need sensible branching,
+        review discipline, ownership, and testing practices.
+      </p>
+
+      <div class="caveats">
+        <div class="caveat">
+          <strong>Conflicts can still happen</strong>
+          <span>Two developers can still change the same definition. Smaller, structured files make those conflicts easier to understand—not impossible.</span>
+        </div>
+        <div class="caveat">
+          <strong>Use short-lived branches</strong>
+          <span>Keeping feature work focused and merging regularly reduces long-running divergence between Power BI branches.</span>
+        </div>
+        <div class="caveat">
+          <strong>Keep generated/local state out of Git</strong>
+          <span>PBIP creates a .gitignore for local project artifacts such as cache and local settings when appropriate.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="sources" id="sources">
+      <h3>Primary references</h3>
+      <ul>
+        <li>
+          Microsoft Learn — Power BI Desktop projects (PBIP):
+          <a href="https://learn.microsoft.com/power-bi/developer/projects/projects-overview" target="_blank" rel="noopener noreferrer">
+            projects overview
+          </a>
+        </li>
+        <li>
+          Microsoft Learn — Enhanced report format (PBIR):
+          <a href="https://learn.microsoft.com/power-bi/developer/embedded/projects-enhanced-report-format" target="_blank" rel="noopener noreferrer">
+            PBIR documentation
+          </a>
+        </li>
+        <li>
+          Microsoft Learn — TMDL and Power BI projects:
+          <a href="https://learn.microsoft.com/power-bi/transform-model/desktop-tmdl-view" target="_blank" rel="noopener noreferrer">
+            TMDL documentation
+          </a>
+        </li>
+        <li>
+          GitHub Docs — Pull requests:
+          <a href="https://docs.github.com/en/pull-requests/get-started/about-pull-requests" target="_blank" rel="noopener noreferrer">
+            about pull requests
+          </a>
+        </li>
+        <li>
+          GitHub Docs — Branches and diffs:
+          <a href="https://docs.github.com/en/pull-requests/reference/branches" target="_blank" rel="noopener noreferrer">
+            branches
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    PBIP version-control showcase • Single-file HTML • Built for internal explanation and team enablement
+  </footer>
+
+  <script>
+    const buttons = document.querySelectorAll(".toggle-btn");
+    const explain = document.getElementById("compareExplain");
+    const code = document.getElementById("compareCode");
+
+    const views = {
+      pbix: {
+        explain: `
+          <h3>Git sees one packaged artifact.</h3>
+          <p>
+            A PBIX-centric repository can tell you that the file changed, but ordinary source-control review
+            cannot easily explain the internal report and model changes line by line.
+          </p>
+          <ul class="compare-list bad">
+            <li>Hard to inspect a meaningful text diff</li>
+            <li>Reviewers often need to open Power BI Desktop</li>
+            <li>Concurrent work tends to collide around one artifact</li>
+            <li>Automated checks have less granular source to inspect</li>
+          </ul>
+        `,
+        code: `
+          <div class="code-label">Repository</div>
+          <div class="tree-line">📁 sales-dashboard/</div>
+          <div class="tree-line">&nbsp;&nbsp;└── <span class="accent">SalesDashboard.pbix</span> <span class="muted">← modified</span></div>
+          <br />
+          <div class="tree-line muted">Git knows the file changed.</div>
+          <div class="tree-line muted">It does not naturally expose the internal report/model changes as source files.</div>
+        `
+      },
+      pbip: {
+        explain: `
+          <h3>Git sees the project structure.</h3>
+          <p>
+            PBIP stores report and semantic-model definitions in structured project folders, giving Git
+            much more useful material for diffs, reviews, merges, and automation.
+          </p>
+          <ul class="compare-list">
+            <li>Changed report/model files are visible</li>
+            <li>Text definitions can be reviewed in a pull request</li>
+            <li>Branches isolate feature work</li>
+            <li>CI checks can target repository content</li>
+          </ul>
+        `,
+        code: `
+          <div class="code-label">Repository</div>
+          <div class="tree-line">📁 sales-dashboard/</div>
+          <div class="tree-line">&nbsp;&nbsp;├── <span class="folder">Sales.Report/</span></div>
+          <div class="tree-line">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="filetxt">definition.pbir</span></div>
+          <div class="tree-line">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="folder">definition/pages/</span></div>
+          <div class="tree-line">&nbsp;&nbsp;├── <span class="folder">Sales.SemanticModel/</span></div>
+          <div class="tree-line">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="folder">definition/tables/</span></div>
+          <div class="tree-line">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="accent">Orders.tmdl</span> <span class="muted">← modified</span></div>
+          <div class="tree-line">&nbsp;&nbsp;├── <span class="filetxt">Sales.pbip</span></div>
+          <div class="tree-line">&nbsp;&nbsp;└── <span class="filetxt">.gitignore</span></div>
+          <br />
+          <div class="tree-line muted">Git can show which project definitions changed—and the text diff inside them.</div>
+        `
+      }
+    };
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        buttons.forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        const selected = views[button.dataset.view];
+        explain.innerHTML = selected.explain;
+        code.innerHTML = selected.code;
+      });
+    });
+  </script>
+</body>
+</html>
