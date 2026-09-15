@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="NLQ architecture: NEWT + Databricks Genie with Unity Catalog metric views, or NEWT + NeeAI with YAML definitions and RDS PostgreSQL.">
+<title>NLQ · Architecture Options Review</title>
+<style>
+:root{--bg:#0b1018;--panel:#131c28;--panel2:#182332;--line:#2a384b;--text:#f2f5fb;--muted:#a7b6c9;--blue:#81abff;--cyan:#62dfd3;--orange:#ffb176;--purple:#bcabff;--accent:var(--blue);color-scheme:dark;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:16px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);line-height:1.55}button,input,select{font:inherit}button,a,input,select{ -webkit-tap-highlight-color:transparent}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--cyan);outline-offset:4px}button{color:inherit}a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:9px 15px}button:hover{background:#233149}button.active{background:var(--text);color:#101722;border-color:var(--text)}h1,h2,h3,p{margin:0}h1{font-size:clamp(1.9rem,3vw,2.8rem);line-height:1.2;letter-spacing:-.025em;font-weight:600}h2{font-size:clamp(1.9rem,3vw,2.8rem);line-height:1.15;letter-spacing:-.035em;font-weight:600}h3{font-size:1.15rem;line-height:1.35;font-weight:600}p{color:var(--muted)}strong{color:var(--text);font-weight:600}small,.small{font-size:.875rem;color:var(--muted)}.eyebrow{font-size:.75rem;letter-spacing:.17em;text-transform:uppercase;color:var(--cyan);font-weight:600}.muted{color:var(--muted)}.blue{color:var(--blue)}.cyan{color:var(--cyan)}.orange{color:var(--orange)}.purple{color:var(--purple)}.mono{font-family:Consolas,"Courier New",monospace}.pill{display:inline-flex;border:1px solid var(--line);border-radius:20px;padding:4px 11px;font-size:.75rem;color:var(--muted);white-space:nowrap}.pill.emphasis{color:var(--cyan);border-color:#315e5f;background:#122a2e}.pill.pending{color:var(--orange);border-color:#66503d;background:#2a211b}.skip{position:fixed;top:-100px;left:15px;background:var(--text);color:var(--bg);padding:10px;z-index:100}.skip:focus{top:10px}
+header{height:77px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid var(--line);gap:20px;background:#0e151f}.document-title{display:flex;gap:12px;align-items:center;letter-spacing:.02em;font-size:.95rem}.header-right{display:flex;align-items:center;gap:20px}.header-label{font-size:.8rem;color:var(--muted)}.layout{display:grid;grid-template-columns:226px minmax(0,1fr);min-height:calc(100vh - 77px)}aside{border-right:1px solid var(--line);padding:34px 18px;display:flex;flex-direction:column;gap:30px;background:#0e151f}nav{display:grid;gap:8px}nav button{text-align:left;border:none;background:transparent;color:var(--muted);padding:12px 14px;border-radius:7px;display:flex;gap:13px;align-items:center;font-size:.9rem}nav button .num{font-family:Consolas,monospace;font-size:.75rem;color:#788ba4}nav button.active{background:#203147;color:#e4efff;box-shadow:inset 2px 0 var(--blue)}nav button.active .num{color:var(--blue)}.rail-caption{padding-left:14px}.rail-bottom{margin-top:auto;padding:20px 14px 0;border-top:1px solid var(--line)}.rail-bottom p{font-size:.8rem}.rail-bottom select{width:100%;margin-top:8px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px;font-size:.875rem}
+main{min-width:0;padding:38px clamp(24px,3.3vw,58px) 28px;max-width:1650px;width:100%;margin:auto}.view{display:none;animation:appear .22s ease}.view.active{display:block}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.section-top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}.intro{max-width:790px;margin-top:16px;font-size:1.06rem}.section-heading{margin-bottom:30px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px}.card p{margin-top:10px}.card .small{margin-top:10px}.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.option-number{font-family:Consolas,monospace;font-size:1rem;color:var(--accent)}.option-card{position:relative;border-top:2px solid var(--accent);padding:24px;display:flex;flex-direction:column;gap:0}.option-card h3{font-size:1.4rem;margin-bottom:7px}.option-card p{font-size:.95rem;flex:1}.option-card .line{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:.875rem;line-height:1.7;color:var(--muted)}.option-card button{margin-top:22px;align-self:flex-start;background:transparent;color:var(--accent);border:none;padding:0;font-size:.9rem}.hero{display:block;margin:12px 0 26px;max-width:1000px}.hero p{font-size:1rem;margin-top:16px;max-width:950px}.rule{height:1px;background:var(--line);margin:25px 0}.scope-strip{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:30px 0}.scope-strip>div{padding:15px 20px;border-right:1px solid var(--line)}.scope-strip>div:last-child{border:none}.scope-strip strong{display:block;font-size:1.1rem}.scope-strip span{font-size:.8rem;color:var(--muted)}.callout{border-left:2px solid var(--cyan);background:#13242b;padding:17px 20px;border-radius:0 7px 7px 0;margin-top:24px;font-size:.95rem}.callout p{margin-top:5px}.callout.warning{border-color:var(--orange);background:#29231e}.footer{display:flex;justify-content:flex-end;align-items:center;gap:20px;border-top:1px solid var(--line);margin-top:34px;padding-top:18px;font-size:.75rem;color:var(--muted)}.footer-controls{display:flex;align-items:center;gap:10px}.footer-controls button{padding:5px 12px;font-size:.85rem}.footer-controls button:disabled{opacity:.3;cursor:default}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}.tabs button{font-size:.9rem;padding:10px 18px}.architecture-head{display:flex;gap:30px;justify-content:space-between;align-items:start;margin-bottom:22px}.architecture-head p{max-width:730px;margin-top:10px}.diagram-box{border:1px solid var(--line);border-radius:12px;background:#101924;overflow:hidden;margin:20px 0}.diagram-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);font-size:.8rem;color:var(--muted)}.diagram-box svg{width:100%;height:auto;display:block}.diagram-description{padding:0 22px 18px;color:var(--muted);font-size:.875rem}.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}.detail-grid .card{padding:20px}.detail-grid p{font-size:.9rem}.list{padding-left:18px;margin:12px 0 0;color:var(--muted)}.list li{margin:8px 0}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;font-size:.9rem;text-align:left}th,td{padding:17px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top}th:last-child,td:last-child{border-right:none}tr:last-child td,tr:last-child th{border-bottom:none}thead{background:#1a2737}thead th{font-size:.95rem;font-weight:600}tbody th{width:18%;background:#101a27;font-weight:500;color:#d8e2ee}td{color:var(--muted)}td strong{display:block;margin-bottom:5px;font-size:.9rem}tbody tr:nth-child(even) td{background:#111b27}.compare-table{min-width:800px;table-layout:fixed}.compare-table th:first-child{width:17%}.compare-table th:not(:first-child){width:41.5%}.row-label{font-size:.75rem;color:var(--muted);font-weight:400;display:block;margin-top:4px}.tagline{font-size:.95rem;margin-top:18px;max-width:950px}
+.step-list{display:grid;gap:14px}.step{display:grid;grid-template-columns:38px 1fr;gap:14px;padding:19px 20px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.step b{font-family:Consolas,monospace;font-weight:400;color:var(--cyan);padding-top:3px}.step h3{font-size:1rem}.step p{font-size:.9rem;margin-top:5px}.metric-number{font-size:3.8rem;line-height:1.1;letter-spacing:-.04em;font-weight:500;margin:15px 0;color:var(--cyan)}.metric-number span{font-size:1.3rem;color:var(--muted);margin-left:7px}.kicker{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}.budget{display:grid;grid-template-columns:1.15fr .85fr;gap:24px}.control{margin-top:21px}.control label{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;margin-bottom:8px;gap:15px}.control output{color:var(--cyan);font-family:Consolas,monospace}input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}input[type=checkbox]{accent-color:var(--cyan)}.bar{height:25px;display:flex;border-radius:5px;overflow:hidden;margin:20px 0 12px;background:#263347}.bar div{min-width:0;transition:width .2s}.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}.legend span{display:flex;align-items:center;gap:7px}.legend i{width:8px;height:8px;display:inline-block;border-radius:2px}.latency-note{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:.9rem}.capacity{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}.capacity .card{padding:20px}.capacity h3{font-size:1rem}.capacity p{font-size:.9rem}.technical-tabs{margin-top:10px}.tech-pane{display:none}.tech-pane.active{display:block}.tech-pane .intro{font-size:.95rem}.tech-pane h3{margin-bottom:12px}.technical-note{margin-top:18px;font-size:.9rem}.code{padding:23px;background:#090f17;border:1px solid var(--line);border-radius:10px;overflow:auto;font-size:.875rem;line-height:1.75;color:#d1e3f5;margin:0;white-space:pre}.code .key{color:var(--cyan)}.code .comment{color:#8e9eb1}.code .val{color:var(--orange)}details{background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-top:12px}summary{cursor:pointer;padding:16px 20px;font-weight:500;font-size:.95rem}details>div{padding:0 20px 20px;color:var(--muted);font-size:.9rem}details p{margin:8px 0}.sources{display:grid;grid-template-columns:1fr 1fr;gap:12px}.source{display:block;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:.9rem}.source span{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}.source:hover{background:var(--panel2);text-decoration:none}.cite{font-size:.75rem;margin-left:3px;color:var(--cyan)}.decision-card{padding:23px;border-left:2px solid var(--accent)}.decision-card p{font-size:.95rem}.numbered{display:grid;grid-template-columns:45px 1fr;gap:10px;border-top:1px solid var(--line);padding:20px 0}.numbered>span{color:var(--cyan);font-family:Consolas,monospace}.numbered p{font-size:.95rem;margin-top:5px}.split{display:grid;grid-template-columns:1.1fr 1fr;gap:35px}.presenting aside{display:none}.presenting .layout{grid-template-columns:1fr}.presenting main{max-width:1480px}.presenting header{height:60px}.presenting .layout{min-height:calc(100vh - 60px)}.inline-note{margin-top:15px;font-size:.8rem;color:var(--muted)}.fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}.fact-grid .card{padding:20px}.fact-grid p{font-size:.9rem}.mobile-label{display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.definition-card{min-width:0;border-top:2px solid var(--accent)}.definition-card>h3{margin-top:12px}.definition-card .example-heading{margin-top:24px}.definition-sample{margin-top:18px;font-size:.875rem;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}.definition-card code{overflow-wrap:anywhere}
+.latency-pane{display:none}.latency-pane.active{display:block}.latency-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(24px,5vw,72px)}.latency-chart{display:flex;justify-content:center}.latency-pie{display:block;width:100%;max-width:350px;height:auto;print-color-adjust:exact}.latency-categories{margin:20px 0 0}.latency-categories>div{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:12px 0;border-top:1px solid var(--line)}.latency-categories dt{display:flex;align-items:center;gap:10px}.latency-categories dd{margin:0;white-space:nowrap;font-family:Consolas,monospace}.latency-categories i{width:12px;height:12px;flex:none;border-radius:3px;print-color-adjust:exact}
+@media(max-width:800px){.latency-layout{grid-template-columns:1fr}.latency-pie{max-width:260px}}
+@media print{.latency-pane{display:block!important;break-inside:avoid;margin-bottom:20px}.latency-pie{max-width:220px}.latency-layout{grid-template-columns:1fr 1fr}}
+@media(min-width:1700px){main{padding-top:48px}.option-card{padding:30px}.hero{margin-bottom:40px}.card{padding:28px}}
+@media(max-width:1150px){.layout{grid-template-columns:190px minmax(0,1fr)}aside{padding:28px 10px}main{padding:28px 24px}.hero{gap:25px;grid-template-columns:1fr}.hero p{max-width:700px}.option-card{padding:19px}.option-card h3{font-size:1.2rem}.card{padding:20px}.header-label{display:none}.detail-grid{grid-template-columns:1fr}.detail-grid .card{padding:18px}.budget{grid-template-columns:1fr 1fr}.sources{grid-template-columns:1fr}.scope-strip>div{padding:14px}}
+@media(max-width:800px){header{padding:0 18px;height:65px}.layout{display:block}aside{display:block;padding:10px 14px;border-right:0;border-bottom:1px solid var(--line)}nav{display:flex;overflow-x:auto;gap:5px}nav button{white-space:nowrap;padding:9px 12px}nav button .num{display:none}.rail-caption,.rail-bottom{display:none}main{padding:25px 18px}.grid3,.grid2,.budget,.capacity,.split,.fact-grid{grid-template-columns:1fr}.scope-strip{grid-template-columns:1fr 1fr}.scope-strip>div:nth-child(2){border-right:0}.scope-strip>div:nth-child(-n+2){border-bottom:1px solid var(--line)}.hero{margin-top:0}.section-top{align-items:start}.section-top .pill{display:none}.architecture-head{display:block}.architecture-head .pill{margin-top:14px}.tabs button{padding:8px 12px}.diagram-box{overflow-x:auto}.diagram-box svg{min-width:780px}.diagram-meta{min-width:780px}.footer{align-items:start}.header-right{gap:7px}.header-right button{font-size:.8rem}.document-title{font-size:.8rem}.section-heading{margin-bottom:22px}.intro{font-size:1rem}.technical-tabs{gap:5px}.technical-tabs button{font-size:.8rem}.source{overflow-wrap:anywhere}.presenting .layout{display:block}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media print{body{background:white;color:#15202b;color-scheme:light;font-size:10pt}header,aside,.footer,.tabs,.header-right,button{display:none!important}.layout{display:block}main{max-width:none;padding:0}.view,.tech-pane{display:block!important;animation:none}.view{break-before:page;margin-bottom:25px}.view:first-child{break-before:auto}h1{font-size:32pt}h2{font-size:24pt}h3,strong{color:#15202b}p,td,.small,.muted{color:#435263}.card,.step,.callout,details,.source,tbody th,tbody tr:nth-child(even) td{background:#f2f5f8;color:#25374a;border-color:#bac6d2}.card,.step,.diagram-box{break-inside:avoid}.table-wrap{overflow:visible}table{font-size:9pt}.compare-table{min-width:0}th,td{padding:10px}thead{background:#d9e3ee}a{color:#17656d}.diagram-box{background:#101924;print-color-adjust:exact}.diagram-description,.diagram-meta{color:#c4d0df}.tech-pane{margin:30px 0}.sources{grid-template-columns:1fr 1fr}.code{color:#15202b;background:#f2f5f8}.code .key{color:#17656d}.code .val{color:#86521e}.pill{color:#334e68}.eyebrow{color:#17656d}.hero{grid-template-columns:1fr}.scope-strip span{color:#435263}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="document-title"><strong>NLQ</strong><span class="muted">/</span><span>Architecture review</span></div><div class="header-right"><span class="header-label">NATURAL LANGUAGE QUERY</span><button id="present" aria-pressed="false">Present ↗</button></div></header>
+<div class="layout">
+<aside><div class="rail-caption eyebrow">NLQ / Options review</div><nav aria-label="Review sections"><button class="active" aria-current="page" data-view="overview"><span class="num">01</span>Overview</button><button data-view="designs"><span class="num">02</span>Two designs</button><button data-view="definitions"><span class="num">03</span>Business definitions</button><button data-view="compare"><span class="num">04</span>Trade-offs</button><button data-view="performance"><span class="num">05</span>Response time</button><button data-view="technical"><span class="num">06</span>Implementation</button></nav><div class="rail-bottom"><p>Frontend and backend in</p><strong>NEWT</strong><p style="margin-top:14px">Architecture proposal<br>15 September 2026</p></div></aside>
+<main id="main" tabindex="-1">
+<section class="view active" id="overview" aria-labelledby="overview-title">
+<div class="section-top"><span class="eyebrow">Architecture options</span><span class="pill emphasis">Initial draft</span></div>
+<div class="hero"><h1 id="overview-title">Natural Language Query (NLQ)</h1><p>Ask a business question. Get a plain-language answer.</p><p>Two AI paths, both using the existing <strong>NEWT frontend and backend</strong>.</p></div>
+<div class="scope-strip"><div><strong>Text answers</strong><span>Natural language in and out</span></div><div><strong>Read-only queries</strong><span>Databricks tables or RDS</span></div><div><strong>Up to 30 users</strong><span>Users asking at the same time</span></div><div><strong>NEWT-owned access</strong><span>Authentication and authorization</span></div></div>
+<div class="grid2">
+<article class="card option-card" style="--accent:var(--orange)"><div class="card-top"><span class="option-number">01 / DATABRICKS</span><span class="pill">Managed workflow</span></div><h3>NEWT + Databricks Genie</h3><p>Genie answers questions using metric views over migrated Databricks tables.</p><div class="line"><strong>We build</strong><br>Metric views, Genie setup, and answer tests.</div><button data-option-link="0">View architecture →</button></article>
+<article class="card option-card" style="--accent:var(--purple)"><div class="card-top"><span class="option-number">02 / NeeAI</span><span class="pill">Custom workflow</span></div><h3>NEWT + NeeAI</h3><p>NeeAI generates SQL and explains results. NEWT controls RDS execution.</p><div class="line"><strong>We build</strong><br>YAML definitions, the query workflow, and answer tests.</div><button data-option-link="1">View architecture →</button></article>
+</div>
+
+</section>
+
+<section class="view" id="designs" aria-labelledby="designs-title"><div class="section-top"><span class="eyebrow">02 / Architecture options</span></div><div class="section-heading"><h2 id="designs-title">Architecture and request flow</h2><p class="intro">Where the question goes and how the answer comes back.</p></div>
+<div class="tabs" aria-label="Architecture options"><button class="active" data-option="0" aria-pressed="true">01 · NEWT + Databricks Genie</button><button data-option="1" aria-pressed="false">02 · NEWT + NeeAI</button></div>
+<div id="architecture-content" aria-live="polite"></div>
+</section>
+
+<section class="view" id="definitions" aria-labelledby="definitions-title">
+<div class="section-top"><span class="eyebrow">03 / Business definitions</span></div>
+<div class="section-heading"><h2 id="definitions-title">Same business rules. Two homes.</h2><p class="intro">Data definitions, metrics, dimensions, and table relationships. Example: completed revenue by customer region.</p></div>
+<div class="grid2">
+<article class="card definition-card" style="--accent:var(--orange)">
+<span class="eyebrow orange">01 / Databricks Genie</span><h3>Unity Catalog metric views</h3><p>Defined in YAML. Published in Databricks. Queried by Genie.</p>
+<pre class="code definition-sample" id="metric-view-yaml-example"><code>version: "1.1"
+source: analytics.sales.orders
+comment: Order revenue in USD
+<span class="key">joins:</span>
+  - name: customers
+    source: analytics.sales.customers
+    'on': source.customer_id = customers.customer_id
+<span class="key">dimensions:</span>
+  - name: Customer region
+    expr: customers.region
+<span class="key">measures:</span>
+  - name: Completed revenue
+    expr: &gt;-
+      SUM(CASE WHEN source.status = 'completed'
+          THEN source.amount ELSE 0 END)</code></pre>
+</article>
+<article class="card definition-card" style="--accent:var(--purple)">
+<span class="eyebrow purple">02 / NEWT + NeeAI</span><h3>Business-definitions YAML</h3><p>Loaded by NEWT. Supplied as context to NeeAI.</p>
+<pre class="code definition-sample" id="neeai-yaml-example"><code><span class="key">data_definitions:</span>
+  orders: {table: public.orders, grain: one row per order}
+  customers: {table: public.customers, grain: one row per customer}
+  amount: {column: orders.amount, meaning: Order value in USD}
+<span class="key">metrics:</span>
+  completed_revenue:
+    sql: &gt;-
+      SUM(CASE WHEN orders.status = 'completed'
+          THEN orders.amount ELSE 0 END)
+<span class="key">dimensions:</span>
+  customer_region: {sql: customers.region}
+<span class="key">table_relationships:</span>
+  orders_to_customers:
+    join: orders.customer_id = customers.customer_id
+    cardinality: many_to_one
+    join_type: left</code></pre>
+</article>
+</div>
+</section>
+
+<section class="view" id="compare" aria-labelledby="compare-title"><div class="section-top"><span class="eyebrow">04 / Trade-offs</span></div><div class="section-heading"><h2 id="compare-title">Less workflow code or more control?</h2><p class="intro">Both reuse NEWT. The main choice is a managed Genie workflow versus a custom NeeAI workflow.</p></div><div class="table-wrap"><table class="compare-table"><thead><tr><th scope="col">Key difference</th><th scope="col"><span class="orange">01</span> Databricks Genie</th><th scope="col"><span class="purple">02</span> NeeAI</th></tr></thead><tbody>
+<tr><th scope="row">Data</th><td>Migrated Databricks tables, governed by Unity Catalog.</td><td>Existing RDS, through NEWT’s connection.</td></tr>
+<tr><th scope="row">Definitions</th><td>Unity Catalog metric views.</td><td>YAML: data, metrics, dimensions, relationships.</td></tr>
+<tr><th scope="row">Main gain</th><td><strong>Less custom workflow code.</strong>Genie handles question → SQL → answer.</td><td><strong>More control.</strong>We control SQL checks and the answer workflow.</td></tr>
+<tr><th scope="row">Main trade-off</th><td>Platform setup; less control over query steps.</td><td>More code to build and maintain.</td></tr>
+</tbody></table></div></section>
+
+
+
+<section class="view" id="performance" aria-labelledby="performance-title"><div class="section-top"><span class="eyebrow">05 / Response time</span><span class="pill">Illustrative estimates</span></div><div class="section-heading"><h2 id="performance-title">Response-time scenarios</h2><p class="intro">AI processing + query execution + checks + queuing and overhead.</p></div>
+<div class="tabs" aria-label="Response-time scenarios"><button class="active" data-scenario="simple" aria-pressed="true" aria-controls="latency-simple">Simple</button><button data-scenario="complex" aria-pressed="false" aria-controls="latency-complex">Complex</button></div>
+<div id="latency-content" aria-live="polite"></div>
+<div class="callout"><strong>Target: up to 30 users at once.</strong></div></section>
+
+<section class="view" id="technical"><div class="section-top"><span class="eyebrow">06 / Implementation</span></div><div class="section-heading"><h2>Who builds what?</h2></div><div class="grid2">
+<article class="card"><span class="eyebrow cyan">NEWT team</span><h3>Application and integration</h3><p>Frontend, backend, API calls, database connectivity, authentication, and authorization.</p></article>
+<article class="card"><span class="eyebrow cyan">NLQ team</span><h3>Definitions and quality</h3><p>Business rules, representative questions, and answer testing.</p></article>
+<article class="card"><span class="eyebrow orange">Databricks path</span><h3>Configure the workflow</h3><p>Build metric views, add them to Genie, and connect NEWT.</p></article>
+<article class="card"><span class="eyebrow purple">NeeAI path</span><h3>Build the workflow</h3><p>Load YAML, generate SQL, validate and query RDS, then explain results.</p></article>
+</div></section>
+
+<footer class="footer"><div class="footer-controls"><span id="page-count">01 / 06</span><button id="prev" aria-label="Previous section" disabled>←</button><button id="next" aria-label="Next section">→</button></div></footer>
+</main></div>
+<script>
+// Single-file, offline presentation. No external dependencies or data calls.
+const sections=["overview", "designs", "definitions", "compare", "performance", "technical"];
+let current=0,option=0;
+const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
+function setView(id,scroll=true){const index=sections.indexOf(id);if(index<0)return;current=index;$$('.view').forEach(el=>el.classList.toggle('active',el.id===id));$$('nav [data-view]').forEach(b=>{const on=b.dataset.view===id;b.classList.toggle('active',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});$('#page-count').textContent=String(index+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');$('#prev').disabled=index===0;$('#next').disabled=index===sections.length-1;if(scroll)window.scrollTo({top:0,behavior:'instant'});}
+$$('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+$('#prev').onclick=()=>setView(sections[Math.max(0,current-1)]);$('#next').onclick=()=>setView(sections[Math.min(sections.length-1,current+1)]);
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='ArrowRight'){setView(sections[Math.min(sections.length-1,current+1)]);e.preventDefault()}if(e.key==='ArrowLeft'){setView(sections[Math.max(0,current-1)]);e.preventDefault()}});
+function setPresentation(on){document.body.classList.toggle('presenting',on);$('#present').textContent=on?'Exit presentation ↙':'Present ↗';$('#present').setAttribute('aria-pressed',String(on));}
+$('#present').onclick=()=>setPresentation(!document.body.classList.contains('presenting'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setPresentation(false)});
+const designs=[
+  {
+    color: '#ffb176', label: '01 / NEWT + DATABRICKS GENIE', title: 'Genie + metric views',
+    desc: 'Genie uses shared metric definitions. The SQL warehouse queries metric views over migrated tables.',
+    pill: 'Managed workflow',
+    alt: 'NEWT frontend calls its backend, which calls Genie. A SQL warehouse queries Unity Catalog metric views over migrated tables. Metric view definitions inform Genie, shown by the dashed arrow. Results and the answer return through NEWT.'
+  },
+  {
+    color: '#bcabff', label: '02 / NEWT + NeeAI', title: 'NeeAI + guarded RDS queries',
+    desc: 'NEWT supplies YAML definitions, validates generated SQL, queries RDS, and asks NeeAI to explain the results.',
+    pill: 'Custom workflow',
+    alt: 'NEWT loads business definitions from YAML and sends context with the question to NeeAI. NeeAI returns SQL. NEWT validates and executes it against RDS, then sends bounded results to NeeAI for explanation. NeeAI has no direct RDS connection.'
+  }
+];
+function rect(x,y,w,h,title,sub,color='#81abff'){return `<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="#182535" stroke="${color}" stroke-opacity=".65"/><text x="${x+16}" y="${y+29}" fill="#f2f5fb" font-size="17" font-weight="600">${title}</text><text x="${x+16}" y="${y+53}" fill="#adbed2" font-size="14">${sub}</text></g>`}
+function path(d,color='#7190b1',dash=false){return `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.7" ${dash?'stroke-dasharray="5 5"':''} marker-end="url(#arrow)"/>`}
+function diagram(i){
+  const d=designs[i],c=d.color;let body='';
+  if(i===0){
+    body=`<rect x="305" y="25" width="710" height="390" rx="14" fill="#211e1b" stroke="#5e4836" stroke-dasharray="6 5"/><text x="325" y="53" fill="${c}" font-size="12" letter-spacing="2">DATABRICKS</text>`
+      +rect(25,90,235,76,'NEWT frontend','Question and text answer','#62dfd3')
+      +rect(25,215,235,76,'NEWT backend','Direct external API calls')
+      +rect(330,90,200,76,'Genie API','Question → answer',c)
+      +rect(580,90,235,76,'SQL warehouse','Query execution',c)
+      +rect(580,215,395,76,'Unity Catalog metric views','Measures · dimensions · joins',c)
+      +rect(580,325,395,70,'Migrated tables','Databricks data',c)
+      +path('M 130 166 V 215')+path('M 155 215 V 166')
+      +path('M 260 239 H 290 V 128 H 330')+path('M 330 150 H 280 V 268 H 260')
+      +path('M 530 114 H 580')+path('M 580 143 H 530')
+      +path('M 685 166 V 215')+path('M 715 215 V 166')
+      +path('M 765 291 V 325')+path('M 795 325 V 291')
+      +path('M 580 245 H 450 V 166',c,true);
+  }else{
+    body=`<rect x="305" y="25" width="410" height="390" rx="14" fill="#132033" stroke="#334a69" stroke-dasharray="6 5"/><text x="325" y="53" fill="#81abff" font-size="12" letter-spacing="2">EXISTING NEWT BACKEND</text>`
+      +rect(25,205,235,76,'NEWT frontend','Question and text answer','#62dfd3')
+      +rect(330,85,360,76,'Business definitions YAML','Data · metrics · dimensions · joins')
+      +rect(330,205,360,76,'NLQ orchestration','Generate SQL → query → explain')
+      +rect(330,325,360,70,'Guarded RDS execution','Validate SQL · read-only · limits')
+      +rect(790,205,225,76,'NeeAI API','SQL + result explanation',c)
+      +rect(790,325,225,70,'RDS PostgreSQL','Existing NEWT connection','#62dfd3')
+      +path('M 260 229 H 330')+path('M 330 258 H 260')
+      +path('M 510 161 V 205','#81abff',true)
+      +path('M 690 229 H 790',c)+path('M 790 258 H 690',c)
+      +path('M 495 281 V 325')+path('M 525 325 V 281')
+      +path('M 690 349 H 790')+path('M 790 378 H 690')
+      +`<text x="775" y="118" fill="${c}" font-size="14">Call 1: question/context → SQL</text><text x="775" y="143" fill="${c}" font-size="14">Call 2: results → explanation</text>`;
+  }
+  return `<svg viewBox="0 0 1040 440" role="img" aria-label="${d.alt}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#91a9c5"/></marker></defs>${body}</svg>`;
+}
+function renderArchitecture(){const d=designs[option];$('#architecture-content').innerHTML=`<div class="architecture-head"><div><h3 style="font-size:1.55rem;color:${d.color}">${d.title}</h3><p>${d.desc}</p></div><span class="pill">${d.pill}</span></div><div class="diagram-box">${diagram(option)}</div>`;}
+function setOption(i){option=i;$$('[data-option]').forEach(b=>{const on=Number(b.dataset.option)===i;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});renderArchitecture()}
+$$('[data-option]').forEach(b=>b.onclick=()=>setOption(Number(b.dataset.option)));$$('[data-option-link]').forEach(b=>b.onclick=()=>{setOption(Number(b.dataset.optionLink));setView('designs')});renderArchitecture();
+const latencyCategories=[
+  {label:'AI processing',color:'#81abff'},
+  {label:'Query execution',color:'#62dfd3'},
+  {label:'Additional checks',color:'#bcabff'},
+  {label:'Queuing and overhead',color:'#ffb176'}
+];
+const latencyScenarios={
+  simple:{title:'Simple question',desc:'A straightforward query with little waiting.',times:[6,2,0,1]},
+  complex:{title:'Complex question',desc:'More processing, extra checks, and queue time.',times:[30,15,10,20]}
+};
+function latencyPie(scenario){
+  const total=scenario.times.reduce((sum,time)=>sum+time,0);
+  let angle=-Math.PI/2;
+  const slices=scenario.times.map((time,i)=>{
+    if(time===0)return '';
+    const end=angle+2*Math.PI*time/total;
+    const startX=160+145*Math.cos(angle),startY=160+145*Math.sin(angle);
+    const endX=160+145*Math.cos(end),endY=160+145*Math.sin(end);
+    angle=end;
+    return `<path d="M 160 160 L ${startX} ${startY} A 145 145 0 ${time>total/2?1:0} 1 ${endX} ${endY} Z" fill="${latencyCategories[i].color}" stroke="var(--panel)" stroke-width="2"><title>${latencyCategories[i].label}: ${time} seconds</title></path>`;
+  }).join('');
+  const description=latencyCategories.map((category,i)=>`${category.label}: ${scenario.times[i]} seconds`).join(', ');
+  return `<svg class="latency-pie" viewBox="0 0 320 320" role="img" aria-label="${scenario.title}, ${total} seconds total. ${description}." xmlns="http://www.w3.org/2000/svg">${slices}</svg>`;
+}
+$('#latency-content').innerHTML=Object.entries(latencyScenarios).map(([id,scenario])=>{
+  const total=scenario.times.reduce((sum,time)=>sum+time,0);
+  return `<section class="latency-pane${id==='simple'?' active':''}" id="latency-${id}" aria-labelledby="latency-${id}-title"><div class="card latency-layout"><div class="latency-chart">${latencyPie(scenario)}</div><div><h3 id="latency-${id}-title">${scenario.title}</h3><p>${scenario.desc}</p><div class="metric-number">${total}<span>seconds</span></div><dl class="latency-categories">${latencyCategories.map((category,i)=>`<div><dt><i style="background:${category.color}" aria-hidden="true"></i>${category.label}</dt><dd>${scenario.times[i]} s</dd></div>`).join('')}</dl></div></div></section>`;
+}).join('');
+function setScenario(id){
+  if(!Object.hasOwn(latencyScenarios,id))return;
+  $$('.latency-pane').forEach(pane=>pane.classList.toggle('active',pane.id==='latency-'+id));
+  $$('[data-scenario]').forEach(button=>{const on=button.dataset.scenario===id;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on))});
+}
+$$('[data-scenario]').forEach(button=>button.onclick=()=>setScenario(button.dataset.scenario));
+</script>
+</body></html>
