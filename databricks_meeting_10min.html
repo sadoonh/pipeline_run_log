@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Databricks | 10-Minute Alignment Meeting</title>
+<style>
+:root{--bg:#0c111b;--panel:#151e2d;--panel2:#192538;--line:#2a374b;--text:#eff4fb;--muted:#a3b2c5;--accent:#76ddcd;--blue:#99b8ff;--amber:#f5cc82}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;line-height:1.45}.page{max-width:1050px;margin:auto;padding:36px 28px 52px}.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:750}.top{display:flex;justify-content:space-between;gap:20px;align-items:start}h1{margin:9px 0 10px;font-size:clamp(28px,4vw,42px);letter-spacing:-.045em;line-height:1.1}p{margin:0;color:var(--muted)}.timer{white-space:nowrap;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-weight:750;color:var(--accent);background:var(--panel)}.pitch{border-left:3px solid var(--accent);margin:25px 0 23px;padding:11px 17px;background:#13202b;border-radius:0 10px 10px 0;color:#dceaf5;font-size:15px}.sectionhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:25px 0 11px}.sectionhead h2{font-size:16px;letter-spacing:-.012em;margin:0}.duration{color:var(--accent);font-size:12px;font-weight:750}.questions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.q{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;min-height:116px}.qtop{display:flex;gap:10px;align-items:start}.num{color:var(--accent);font-weight:800;font-size:12px;border:1px solid #3a6b6a;border-radius:7px;min-width:28px;height:27px;display:grid;place-items:center}.q strong{display:block;line-height:1.3;font-size:14px}.q p{font-size:12.5px;margin:7px 0 0 38px}.pill{color:var(--blue);font-size:12px;font-weight:700}.access{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.access>div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:13px}.access strong{display:block;color:var(--text);font-size:12px;margin-bottom:5px}.access span{color:var(--muted);font-size:12px}.outcomes{border:1px solid #406d68;background:#132522;border-radius:12px;padding:16px 19px}.outcomes label{display:flex;align-items:start;gap:9px;font-size:13px;margin:9px 0;cursor:pointer}.outcomes input{accent-color:#76ddcd;margin-top:3px}.footer{display:flex;justify-content:space-between;gap:15px;margin-top:17px;color:var(--muted);font-size:11px}.footer a{color:var(--accent)}.notes{margin-top:14px}.notes summary{cursor:pointer;font-size:12px;color:var(--muted)}.notes textarea{margin-top:8px;width:100%;min-height:105px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;resize:vertical}button{border:1px solid var(--line);background:var(--panel);border-radius:9px;color:var(--text);padding:9px 12px;cursor:pointer;font-weight:600;font-size:12px}button:hover{border-color:var(--accent)}@media(max-width:670px){.page{padding:23px 16px}.questions{grid-template-columns:1fr}.access{grid-template-columns:1fr 1fr}.top{flex-wrap:wrap}.timer{padding:8px 12px}.footer{flex-direction:column}}@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff;color:#142033}.page{padding:0;max-width:none}.eyebrow,.duration,.timer{color:#00766e}p,.q p,.access span,.footer{color:#4c5b6b}.q,.access>div{background:#f5f8fc;border:1px solid #d4dce5}.q strong,.access strong{color:#142033}.pitch{color:#142033;background:#e9f7f4}.outcomes{background:#eaf7f2;border:1px solid #8abeb2}.outcomes label{color:#142033}.num{color:#00766e;border-color:#8abeb2}.notes,button{display:none}.page{zoom:.93}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top"><div><div class="eyebrow">Meeting brief · Data engineering</div><h1>RDS → Databricks</h1><p>Architecture, developer permissions, and ownership — prioritized for a short alignment meeting.</p></div><div class="timer">10 MIN TOTAL</div></header>
+  <div class="pitch"><strong>Opening statement:</strong> “We want to ingest our AWS RDS PostgreSQL data into Databricks and give our analytics team enough self-service access to build, run, and monitor pipelines — without needing admin privileges.”</div>
+  <div class="sectionhead"><h2>01 / Ask these questions first</h2><span class="duration">~6 MIN</span></div>
+  <section class="questions">
+    <article class="q"><div class="qtop"><span class="num">01</span><strong>What is the approved RDS ingestion approach?</strong></div><p>Native connector / CDC, scheduled JDBC loads, DMS, or an existing internal pattern? <span class="pill">Can it capture updates and deletes?</span></p></article>
+    <article class="q"><div class="qtop"><span class="num">02</span><strong>Is RDS ↔ Databricks connectivity already available?</strong></div><p>Network path, security groups, credentials, and cross-account access. If not, <span class="pill">who provisions it?</span></p></article>
+    <article class="q"><div class="qtop"><span class="num">03</span><strong>Can our team get its own development schema?</strong></div><p>Unity Catalog access to create and modify our own tables/views, plus read access to approved sources.</p></article>
+    <article class="q"><div class="qtop"><span class="num">04</span><strong>Can we use compute without repeated tickets?</strong></div><p>Notebooks, SQL warehouses, Python/Spark, and approved compute policies or shared resources.</p></article>
+    <article class="q"><div class="qtop"><span class="num">05</span><strong>Can we own jobs and pipelines end-to-end?</strong></div><p>Create, schedule, monitor, rerun, and troubleshoot jobs. Can a service principal own production runs?</p></article>
+    <article class="q"><div class="qtop"><span class="num">06</span><strong>What's the exact access-request process?</strong></div><p>Required groups, tickets, approvers, and a standard <span class="pill">developer role/profile</span> if available.</p></article>
+  </section>
+  <div class="sectionhead"><h2>02 / Access to request</h2><span class="duration">~2 MIN</span></div>
+  <section class="access">
+    <div><strong>Data & governance</strong><span>Workspace access; Unity Catalog read + development schema write; approved RDS connection.</span></div>
+    <div><strong>Build & execute</strong><span>Notebooks; Python/Spark compute; SQL warehouse; jobs and pipelines.</span></div>
+    <div><strong>Operate & deploy</strong><span>Job logs/monitoring; secrets; service principal; Git/CI/CD integration.</span></div>
+  </section>
+  <div class="sectionhead"><h2>03 / Confirm before leaving</h2><span class="duration">~2 MIN</span></div>
+  <section class="outcomes">
+    <label><input type="checkbox"/>Agreed RDS ingestion method (including incremental-load strategy)</label>
+    <label><input type="checkbox"/>Confirmed workspace, development catalog/schema, and compute access</label>
+    <label><input type="checkbox"/>Named owners for networking, permissions, and service identity</label>
+    <label><input type="checkbox"/>Access-request path, internal documentation, and next steps</label>
+  </section>
+  <details class="notes"><summary>Meeting notes (optional)</summary><textarea placeholder="Record decisions, owners, ticket links, blockers..."></textarea></details>
+  <footer class="footer"><span>Follow-up if time permits: dev/prod separation · cost controls · CI/CD standards · data governance.</span><button onclick="window.print()">Print / Save as PDF</button></footer>
+</main>
+</body>
+</html>
